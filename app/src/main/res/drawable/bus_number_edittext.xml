@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#51CAC9C9"/> <!-- 이 부분에서 배경 색을 원하는 색으로 설정하세요 -->
+    <corners android:radius="20dp"/> <!-- 이 부분에서 모서리 둥글기를 조정할 수 있습니다 -->
+</shape>
