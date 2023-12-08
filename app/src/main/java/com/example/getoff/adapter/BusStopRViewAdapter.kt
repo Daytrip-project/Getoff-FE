@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.getoff.dao.BusStop
+import com.example.getoff.dto.BusStop
 import com.example.getoff.databinding.BusstopItemBinding
 
 class BusStopRViewAdapter(private val busStops: List<BusStop>) : RecyclerView.Adapter<BusStopRViewAdapter.Holder>() {

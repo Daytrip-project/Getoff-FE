@@ -21,6 +21,10 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  */
 class BusSearchFragment : Fragment() {
+
+//    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//    private val retrofitService: BusStopService = create()
+
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
@@ -48,33 +52,33 @@ class BusSearchFragment : Fragment() {
         val view: View = inflater.inflate(R.layout.fragment_bus_search, container, false)
         val imageButton = view.findViewById<ImageButton>(R.id.busSearchImageButton)
         imageButton.setOnClickListener {
-            val newFragment: Fragment = BusRouteFragment()
+            val newFragment: Fragment = BusRouteFragment.newInstance("전달할 데이터")
             val transaction: FragmentTransaction =
                 requireActivity().supportFragmentManager.beginTransaction()
             transaction.replace(R.id.mainContainer, newFragment)
-            transaction.addToBackStack(null) // 이 부분을 추가하여 백스택에 추가합니다.
+            transaction.addToBackStack(null)
             transaction.commit()
         }
         return view
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment BusSearchFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            BusSearchFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
-    }
+//    companion object {
+//        /**
+//         * Use this factory method to create a new instance of
+//         * this fragment using the provided parameters.
+//         *
+//         * @param param1 Parameter 1.
+//         * @param param2 Parameter 2.
+//         * @return A new instance of fragment BusSearchFragment.
+//         */
+//        // TODO: Rename and change types and number of parameters
+//        @JvmStatic
+//        fun newInstance(param1: String, param2: String) =
+//            BusSearchFragment().apply {
+//                arguments = Bundle().apply {
+//                    putString(ARG_PARAM1, param1)
+//                    putString(ARG_PARAM2, param2)
+//                }
+//            }
+//    }
 }
