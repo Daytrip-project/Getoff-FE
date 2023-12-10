@@ -3,7 +3,6 @@ package com.example.getoff.layout
 import android.Manifest
 import android.annotation.TargetApi
 import android.app.Activity
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -28,14 +27,30 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        requestLocationPermission()
-
-        // 첫 실행 확인
-        val prefs = getSharedPreferences("daytrip_getoff_app_local_context_registry", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("app_execute", false)) {
-            scheduleSensorWorker()
-            prefs.edit().putBoolean("app_execute", true).apply()
+        if (requestLocationPermission()) {
+            proceedAfterPermission()
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_LOCATION) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                // 권한이 부여되었을 때 실행할 코드
+                proceedAfterPermission()
+            } else {
+                finishAffinity()
+            }
+        }
+    }
+
+    private fun proceedAfterPermission() {
+        // 첫 실행 확인
+//        val prefs = getSharedPreferences("daytrip_getoff_app_local_context_registry", Context.MODE_PRIVATE)
+//        if (!prefs.getBoolean("app_execute", false)) {
+            scheduleSensorWorker()
+//            prefs.edit().putBoolean("app_execute", true).apply()
+//        }
 
         val newFragment: Fragment = BusSearchFragment()
         val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
@@ -71,7 +86,9 @@ class MainActivity : AppCompatActivity() {
     )
 
     /** 위치정보 권한 요청**/
-    private fun requestLocationPermission() {
+    private fun requestLocationPermission() : Boolean {
+        var isAlreadyPermitted: Boolean = false
+
         if (Build.VERSION.SDK_INT >= 29) {
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -92,6 +109,9 @@ class MainActivity : AppCompatActivity() {
                     REQUEST_LOCATION
                 )
             }
+            else {
+                isAlreadyPermitted = true
+            }
         } else {
             if (ActivityCompat.checkSelfPermission(
                     this,
@@ -108,6 +128,11 @@ class MainActivity : AppCompatActivity() {
                     REQUEST_LOCATION
                 )
             }
+            else {
+                isAlreadyPermitted = true
+            }
         }
+
+        return isAlreadyPermitted
     }
 }

@@ -1,9 +1,6 @@
 package com.example.getoff.util
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.annotation.TargetApi
-import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -12,34 +9,21 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.hardware.Sensor
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
-import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.Observer
 import com.example.getoff.R
-import com.example.getoff.dto.BusStop
-import com.example.getoff.dto.Station
 import com.example.getoff.layout.AlarmActivity
-import com.example.getoff.layout.BusRouteFragment
 import com.example.getoff.layout.MainActivity
-import com.example.getoff.view.ShareStationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 
 class GpsUtil : Service() {
-
-    private lateinit var shareStationViewModel: ShareStationViewModel
 
     private val CHANNEL_ID: String = "getoff_app_notification"
     private val NOTIFICATION_ID: Int = 410
@@ -47,10 +31,6 @@ class GpsUtil : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
-    private var destination: Station? = null
-    private val observer = Observer<Station> { data ->
-        destination = data
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -58,7 +38,6 @@ class GpsUtil : Service() {
         startForeground(NOTIFICATION_ID, createNotification())
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-//        this.requestLocationPermission()
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
@@ -70,16 +49,18 @@ class GpsUtil : Service() {
                     if (speedKmH > 20) {
                         suggestAlarmNotification()
                     }
+
+                    val intent = Intent("com.example.UPDATE_LOCATION")
+                    intent.putExtra("longitude", location.longitude)
+                    intent.putExtra("latitude", location.latitude)
+                    sendBroadcast(intent)
                 }
             }
         }
 
-        shareStationViewModel = ShareStationViewModel()
-        shareStationViewModel.destination.observeForever(observer)
         startLocationUpdates()
     }
 
-//    @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
 
         val locationRequest = LocationRequest.Builder(1000L)
@@ -95,16 +76,10 @@ class GpsUtil : Service() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
-            fusedLocationClient.requestLocationUpdates(it, locationCallback, null) }
+            fusedLocationClient.requestLocationUpdates(it, locationCallback, null)
+        }
     }
 
     private fun createNotificationChannel() {
@@ -164,104 +139,6 @@ class GpsUtil : Service() {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        shareStationViewModel.destination.removeObserver(observer)
-    }
-
-//    init {
-//        companionContext = context
-//    }
-//
-//    companion object {
-//        private var companionContext: Context? = null
-//
-//        @SuppressLint("MissingPermission")
-//        fun getLocation() {
-//            val fusedLocationProviderClient =
-//                companionContext?.let { LocationServices.getFusedLocationProviderClient(it) }
-//
-//            fusedLocationProviderClient?.lastLocation
-//                ?.addOnSuccessListener { success: Location? ->
-//                    success?.let { location ->
-////                        return location.latitude.toFloat()
-////                        "${location.latitude}, ${location.longitude}"
-//                    }
-//                }
-//                ?.addOnFailureListener { fail ->
-//                    fail.localizedMessage
-//                }
-//        }
-//    }
-
-    /** 위치 권한 SDK 버전 29 이상**/
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private val permissionsLocationUpApi29Impl = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_BACKGROUND_LOCATION
-    )
-
-    /** 위치 권한 SDK 버전 29 이하**/
-    @TargetApi(Build.VERSION_CODES.P)
-    private val permissionsLocationDownApi29Impl = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION
-    )
-
-    /** 위치정보 권한 요청**/
-//    fun requestLocationPermission() {
-//        if (Build.VERSION.SDK_INT >= 29) {
-//            if (ActivityCompat.checkSelfPermission(
-//                    context,
-//                    permissionsLocationUpApi29Impl[0]
-//                ) != PackageManager.PERMISSION_GRANTED
-//                || ActivityCompat.checkSelfPermission(
-//                    context,
-//                    permissionsLocationUpApi29Impl[1]
-//                ) != PackageManager.PERMISSION_GRANTED ||
-//                ActivityCompat.checkSelfPermission(
-//                    context,
-//                    permissionsLocationUpApi29Impl[2]
-//                ) != PackageManager.PERMISSION_GRANTED
-//            ) {
-//                ActivityCompat.requestPermissions(
-//                    context as Activity,
-//                    permissionsLocationUpApi29Impl,
-//                    REQUEST_LOCATION
-//                )
-//            }
-//        } else {
-//            if (ActivityCompat.checkSelfPermission(
-//                    context,
-//                    permissionsLocationDownApi29Impl[0]
-//                ) != PackageManager.PERMISSION_GRANTED
-//                || ActivityCompat.checkSelfPermission(
-//                    context,
-//                    permissionsLocationDownApi29Impl[1]
-//                ) != PackageManager.PERMISSION_GRANTED
-//            ) {
-//                ActivityCompat.requestPermissions(
-//                    context as Activity,
-//                    permissionsLocationDownApi29Impl,
-//                    REQUEST_LOCATION
-//                )
-//            }
-//        }
-//    }
-
-//    override fun onLocationChanged(p0: Location) {
-//        val speedKmH = location.speed * 3.6
-//
-//        // 속도 로깅
-//        Log.d("SpeedCheck", "Speed: $speedKmH km/h")
-//
-//        // 시속 20km 이상 확인
-//        if (speedKmH > 20) {
-//            Log.d("SpeedCheck", "사용자가 시속 20km 이상으로 이동 중입니다.")
-//        }
-//    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null

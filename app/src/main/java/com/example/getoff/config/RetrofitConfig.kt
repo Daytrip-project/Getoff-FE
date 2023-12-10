@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit
 
 class RetrofitConfig : Application() {
     companion object{
-//        const val SERVER_URL = "http://192.168.33.134:8080/"
-        const val SERVER_URL = "/"
+        const val SERVER_URL = "http://192.168.33.134:8080/"
+//        const val SERVER_URL = "/"
 
         lateinit var retrofit: Retrofit
     }

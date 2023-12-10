@@ -1,5 +1,9 @@
 package com.example.getoff.layout
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,18 +11,14 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.getoff.R
 import com.example.getoff.adapter.BusStopRViewAdapter
 import com.example.getoff.databinding.FragmentBusRouteBinding
 import com.example.getoff.decoration.ItemDividerDecoration
 import com.example.getoff.dto.BusStop
-import com.example.getoff.util.RetrofitUtil
-import com.example.getoff.view.ShareStationViewModel
-import kotlinx.coroutines.launch
+import com.example.getoff.view.ShareGPSViewModel
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -31,30 +31,27 @@ import kotlinx.coroutines.launch
  * create an instance of this fragment.
  */
 class BusRouteFragment : Fragment(), ConfirmDialogInterface {
-//    private val binding by lazy { ActivityBusRouteBinding.inflate(layoutInflater) }
-    private val shareStationViewModel: ShareStationViewModel by this.activityViewModels()
+    private val shareGPSViewModel: ShareGPSViewModel by viewModels()
 
     private var _binding: FragmentBusRouteBinding? = null
     private val binding get() = _binding!!
 
     private var busStops: ArrayList<BusStop>? = null
 
+    private val locationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val longitude = intent.getDoubleExtra("longitude", 0.0)
+            val latitude = intent.getDoubleExtra("latitude", 0.0)
+            shareGPSViewModel.updateLocation(longitude, latitude)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        setContentView(binding.root)
-//        arguments?.let {
-//            param1 = it.getString(ARG_PARAM1)
-//            param2 = it.getString(ARG_PARAM2)
-//        }
 
         val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 parentFragmentManager.popBackStack()
-
-                // 또는 방법 2: 다른 프래그먼트로 교체
-                // parentFragmentManager.beginTransaction()
-                //     .replace(R.id.container, AnotherFragment())
-                //     .commit()
             }
         }
 
@@ -77,10 +74,12 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         val busNumberTextView = view.findViewById<TextView>(R.id.busNumber)
         busNumberTextView.text = busNumber
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            RetrofitUtil.requestRoute(busNumber!!)
+        // observe GPS data
+//        busInfoTV = view.findViewById<TextView>(R.id.busInfo)
+        shareGPSViewModel.locationData.observe(viewLifecycleOwner) { location ->
+            // 텍스트뷰 업데이트
+//            busInfoTV?.text = "Longitude: ${location.first}, Latitude: ${location.second}"
         }
-        setRouteRView()
     }
 
 //    override fun onStart() {
@@ -117,8 +116,19 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 //        }
 //    }
 
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter("com.example.UPDATE_LOCATION")
+        context?.registerReceiver(locationReceiver, filter)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        context?.unregisterReceiver(locationReceiver)
+    }
+
     override fun onYesButtonClick(id: Int) {
-        shareStationViewModel.setDestination(busStops!![id])
+        // set alarm process
     }
 
     companion object {
