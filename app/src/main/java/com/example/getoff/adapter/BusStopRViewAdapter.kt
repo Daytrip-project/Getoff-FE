@@ -6,8 +6,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.getoff.dto.BusStop
 import com.example.getoff.databinding.BusstopItemBinding
+import com.example.getoff.response.ThirdResponse
 
-class BusStopRViewAdapter(private val busStops: List<BusStop>) : RecyclerView.Adapter<BusStopRViewAdapter.Holder>() {
+class BusStopRViewAdapter(private val busStops: List<ThirdResponse.Response.Body.Items.Item>) : RecyclerView.Adapter<BusStopRViewAdapter.Holder>() {
     interface ItemClick {
         fun onClick(view : View, position : Int)
     }
@@ -23,8 +24,8 @@ class BusStopRViewAdapter(private val busStops: List<BusStop>) : RecyclerView.Ad
         holder.itemView.setOnClickListener {
             itemClick?.onClick(it, position)
         }
-        holder.busStopName.text = busStops[position].name
-        holder.locationName.text = busStops[position].locationName
+        holder.busStopName.text = busStops[position].nodenm
+        holder.locationName.text = busStops[position].routeid
     }
 
     override fun getItemCount(): Int {

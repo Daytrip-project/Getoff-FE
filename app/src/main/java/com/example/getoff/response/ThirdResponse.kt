@@ -1,7 +1,9 @@
 package com.example.getoff.response
 
 
+import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
+import kotlinx.android.parcel.Parcelize
 
 data class ThirdResponse(
     @SerializedName("response")
@@ -27,6 +29,7 @@ data class ThirdResponse(
                 @SerializedName("item")
                 val item: List<Item>
             ) {
+                @Parcelize
                 data class Item(
                     @SerializedName("gpslati")
                     val gpslati: Double,
@@ -42,7 +45,7 @@ data class ThirdResponse(
                     val nodeord: Int,
                     @SerializedName("routeid")
                     val routeid: String
-                )
+                ) : Parcelable
             }
         }
 

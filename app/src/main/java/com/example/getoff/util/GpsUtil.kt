@@ -33,28 +33,28 @@ import kotlin.math.pow
 class GpsUtil : Service() {
 
     private val CHANNEL_ID: String = "getoff_app_notification"
-    private val NOTIFICATION_ID: Int = 410
+    private val SERVICE_NOTIFICATION_ID: Int = 410
+    private val ALARM_NOTIFICATION_ID: Int = 318
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
+    private lateinit var notificationManager: NotificationManager
 
     private var isSetDestination: Boolean = false
     private var destination_longitude: Double = 0.0
     private var destination_latitude: Double = 0.0
 
-    private lateinit var broadcastReceiver: BroadcastReceiver
+    private lateinit var destinationReceiver: BroadcastReceiver
+    private lateinit var notificationReceiver: BroadcastReceiver
 
     var testTrigger = 0
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification())
-    }
+        startForeground(SERVICE_NOTIFICATION_ID, createNotification())
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // 기존 초기화 코드...
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         locationCallback = object : LocationCallback() {
@@ -74,16 +74,13 @@ class GpsUtil : Service() {
                     sendBroadcast(intent)
 
 //                    if(isSetDestination && getDistanceFromTarget(location.latitude, location.longitude, destination_latitude, destination_longitude) * 1000 >= 100){
-                    testTrigger += 10
+                    testTrigger += 5
                     if(isSetDestination && destination_latitude != 0.0 && destination_longitude != 0.0 && destination_latitude < testTrigger && destination_longitude < testTrigger){
-//                        val intent = Intent("com.example.TRIGGER_ARRIVE")
-//                        intent.putExtra("arrive_trigger", true)
-//                        sendBroadcast(intent)
                         val intent = Intent(this@GpsUtil, AlarmActivity::class.java)
                         startActivity(intent)
 
                         // destination local reset + reset broadcast
-                        isSetDestination = false
+                        resetDestination()
                     }
                 }
             }
@@ -91,8 +88,28 @@ class GpsUtil : Service() {
 
         startLocationUpdates()
 
-        // 서비스가 종료된 후 재시작을 위해 START_STICKY 반환
-        return START_STICKY
+        destinationReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                destination_longitude = intent.getDoubleExtra("destination_longitude", 0.0)
+                destination_latitude = intent.getDoubleExtra("destination_latitude", 0.0)
+                isSetDestination = true
+                manageAlarmNotification()
+            }
+        }
+        notificationReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                resetDestination()
+            }
+        }
+        registerReceiver(destinationReceiver, IntentFilter("com.example.UPDATE_DESTINATION"))
+        registerReceiver(notificationReceiver, IntentFilter("com.example.CANCEL_ALARM"))
+    }
+
+    private fun resetDestination() {
+        destination_longitude = 0.0
+        destination_latitude = 0.0
+        isSetDestination = false
+        notificationManager.cancel(ALARM_NOTIFICATION_ID)
     }
 
     private fun getDistanceFromTarget(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -140,6 +157,8 @@ class GpsUtil : Service() {
     }
 
     private fun createNotificationChannel() {
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
                 CHANNEL_ID,
@@ -191,8 +210,36 @@ class GpsUtil : Service() {
             .setVibrate(longArrayOf(0, 500))
             .build()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+//        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(ALARM_NOTIFICATION_ID, notification)
+    }
+
+    private fun manageAlarmNotification() {
+        val actionIntent = Intent("com.example.CANCEL_ALARM")
+//        val pendingIntent = PendingIntent.getActivity(
+//            this,
+//            0,
+//            notificationIntent,
+//            Intent.FILL_IN_ACTION or PendingIntent.FLAG_IMMUTABLE
+//        )
+        val actionPendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            actionIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("하차 알람을 취소하시겠습니까?")
+            .setContentText("클릭하여 앱을 열 수 있습니다.")
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentIntent(actionPendingIntent)
+            .setVibrate(longArrayOf(0, 500))
+            .addAction(R.drawable.cancel_alarm_button, "알람취소", actionPendingIntent) // 버튼 추가
+            .build()
+
+//        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(ALARM_NOTIFICATION_ID, notification)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -200,7 +247,8 @@ class GpsUtil : Service() {
     }
     override fun onDestroy() {
         super.onDestroy()
-        this.unregisterReceiver(broadcastReceiver)
+        this.unregisterReceiver(destinationReceiver)
+        this.unregisterReceiver(notificationReceiver)
     }
 
 }

@@ -11,9 +11,9 @@ import retrofit2.http.Query
 
 interface BusRouteApiService {
     @GET("getCtyCodeList")
-    fun getAllCityCode(@Query("serviceKey") serviceKey: String,
+    suspend fun getAllCityCode(@Query("serviceKey") serviceKey: String,
                         @Query("_type") _type: String
-    ): Call<FirstResponse>
+    ): Response<FirstResponse>
 
     @GET("getRouteNoList")
     suspend fun getRouteId(@Query("serviceKey") serviceKey: String,

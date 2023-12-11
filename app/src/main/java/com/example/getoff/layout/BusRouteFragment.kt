@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,7 +19,9 @@ import com.example.getoff.adapter.BusStopRViewAdapter
 import com.example.getoff.databinding.FragmentBusRouteBinding
 import com.example.getoff.decoration.ItemDividerDecoration
 import com.example.getoff.dto.BusStop
+import com.example.getoff.response.ThirdResponse
 import com.example.getoff.view.ShareGPSViewModel
+import java.util.Objects
 
 
 class BusRouteFragment : Fragment(), ConfirmDialogInterface {
@@ -27,7 +30,8 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     private var _binding: FragmentBusRouteBinding? = null
     private val binding get() = _binding!!
 
-    private var busStops: ArrayList<BusStop>? = arrayListOf()
+//    private var busStops: ArrayList<BusStop>? = arrayListOf()
+    private var busStopList = mutableListOf<ThirdResponse.Response.Body.Items.Item>()
 
     private val locationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -60,28 +64,32 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val busNumber = arguments?.getString("busNumber")
+        val busNumber = arguments?.getInt("busNumber")
+        busStopList = arguments?.getParcelableArrayList("busStopList")!!
 
         val busNumberTextView = view.findViewById<TextView>(R.id.busNumber)
-        busNumberTextView.text = busNumber
+//        val busInfoTextView = view.findViewById<TextView>(R.id.busInfo)
+        busNumberTextView.text = busNumber.toString()
+//        busInfoTextView.text = busNumber.toString()
 
         setRouteRView()
     }
 
     private fun setRouteRView() {
 
-        val rViewAdapter = BusStopRViewAdapter(busStops!!)
+        val rViewAdapter = BusStopRViewAdapter(busStopList!!)
         binding.busRouteRecyclerView.adapter = rViewAdapter
         binding.busRouteRecyclerView.layoutManager = LinearLayoutManager(context)
 //        binding.busRouteRecyclerView.apply { addItemDecoration(DividerItemDecoration(context, LinearLayout.VERTICAL)) }
         binding.busRouteRecyclerView.apply { addItemDecoration(ItemDividerDecoration()) }
 
 //        clickViewEvents()
-        busStops!!.add(BusStop("id1", "name1", "lN1"))
-        rViewAdapter.notifyItemInserted(busStops!!.size - 1)
+//        busStopList!!.add(BusStop("id1", "name1", "lN1"))
+        rViewAdapter.notifyItemInserted(busStopList!!.size - 1)
 
         rViewAdapter!!.itemClick = object : BusStopRViewAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
+                view.setBackgroundColor(ContextCompat.getColor(view.context, R.color.lightRed))
                 val dialog = ConfirmDialog(this@BusRouteFragment, "알람을 설정하시겠습니까?", position)
                 dialog.isCancelable = false
                 dialog.show(activity?.supportFragmentManager!!, "ConfirmDialog")
@@ -118,17 +126,18 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         // set alarm process
         // id로 리스트의 index 검색 목적지 버스 정류장 가져오기
         val intent = Intent("com.example.UPDATE_DESTINATION")
-        intent.putExtra("destination_longitude", 25.123456789)
-        intent.putExtra("destination_latitude", 10.123456789)
+        intent.putExtra("destination_longitude", busStopList[id].gpslong)
+        intent.putExtra("destination_latitude", busStopList[id].gpslati)
         context?.sendBroadcast(intent)
     }
 
     companion object {
         @JvmStatic
-        fun newInstance(busNumber: String) =
+        fun newInstance(busNumber: Int, busStopList: ArrayList<ThirdResponse.Response.Body.Items.Item>) =
             BusRouteFragment().apply {
                 arguments = Bundle().apply {
-                    putString("busNumber", busNumber)
+                    putInt("busNumber", busNumber)
+                    putParcelableArrayList("busStopList", busStopList)
                 }
             }
     }
