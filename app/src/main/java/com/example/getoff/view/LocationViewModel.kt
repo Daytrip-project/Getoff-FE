@@ -10,7 +10,9 @@ import com.example.getoff.config.RetrofitConfig
 import com.example.getoff.response.ThirdResponse
 import com.google.android.gms.tasks.Tasks.await
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,36 +92,28 @@ class LocationViewModel : ViewModel() {
         return _busStopList.value
     }
 
-    suspend fun getTransportInfo(targetCityName: String, busNumber: Int): MutableList<List<ThirdResponse.Response.Body.Items.Item>> {
-        var allBusStopList = mutableListOf<List<ThirdResponse.Response.Body.Items.Item>>()
-        return withContext(Dispatchers.IO) {
+    fun getTransportInfoAsync(targetCityName: String, busNumber: Int): Deferred<List<List<ThirdResponse.Response.Body.Items.Item>>> {
+        return viewModelScope.async {
             val cityCode = requestCityCode(targetCityName)
             val routeIdList = requestRouteId(cityCode!!, busNumber)
+            val allBusStopList = mutableListOf<List<ThirdResponse.Response.Body.Items.Item>>()
             for (routeId in routeIdList!!) {
-                allBusStopList.add(requestBusStopList(cityCode!!, routeId)!!)
+                allBusStopList.add(requestBusStopList(cityCode, routeId)!!)
             }
-
             allBusStopList
         }
     }
 
-    private val _userCity = MutableLiveData<String>()
-    val userCity: LiveData<String>
-        get() = _userCity
-    suspend fun getUserCityName() {
-        return withContext(Dispatchers.IO) {
-//            viewModelScope.launch {
-                val currentLocationData = withContext(Dispatchers.Main) {
-                    _locationData.value
-                }
-
-                _userCity.value = "구미"
-
+    fun getUserCityName(): Deferred<String> {
+        return viewModelScope.async {
+            var targetCityName: String = "구미"
+            val currentLocationData = withContext(Dispatchers.Main) {
+                _locationData.value
+            }
 //            currentLocationData?.let { locationData ->
-//                _userCity.value = "구미"
+//                targetCityName = "구미"
 //            }
-//            }
+            targetCityName
         }
-
     }
 }

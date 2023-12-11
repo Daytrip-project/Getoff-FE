@@ -12,20 +12,19 @@ import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.getoff.R
 import com.example.getoff.adapter.BusStopRViewAdapter
 import com.example.getoff.databinding.FragmentBusRouteBinding
 import com.example.getoff.decoration.ItemDividerDecoration
-import com.example.getoff.dto.BusStop
 import com.example.getoff.response.ThirdResponse
-import com.example.getoff.view.ShareGPSViewModel
-import java.util.Objects
+import com.example.getoff.view.LocationViewModel
 
 
 class BusRouteFragment : Fragment(), ConfirmDialogInterface {
-    private val shareGPSViewModel: ShareGPSViewModel by viewModels()
+    private val locationViewModel: LocationViewModel by activityViewModels()
 
     private var _binding: FragmentBusRouteBinding? = null
     private val binding get() = _binding!!
@@ -37,7 +36,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         override fun onReceive(context: Context, intent: Intent) {
             val longitude = intent.getDoubleExtra("longitude", 0.0)
             val latitude = intent.getDoubleExtra("latitude", 0.0)
-            shareGPSViewModel.updateLocation(longitude, latitude)
+            locationViewModel.updateLocation(longitude, latitude)
         }
     }
 
