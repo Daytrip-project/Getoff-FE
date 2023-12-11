@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -31,12 +32,27 @@ class GpsUtil : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
+    class BootCompletedReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
+                val serviceIntent = Intent(context, GpsUtil::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent)
+                } else {
+                    context.startService(serviceIntent)
+                }
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
+    }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // 기존 초기화 코드...
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         locationCallback = object : LocationCallback() {
@@ -59,6 +75,9 @@ class GpsUtil : Service() {
         }
 
         startLocationUpdates()
+
+        // 서비스가 종료된 후 재시작을 위해 START_STICKY 반환
+        return START_STICKY
     }
 
     private fun startLocationUpdates() {
@@ -67,6 +86,14 @@ class GpsUtil : Service() {
             .setIntervalMillis(1000L)  // 위치 업데이트 간격 설정 (밀리초 단위)
             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)  // 위치 요청의 우선순위 설정
             .build()
+
+//        val settingsClient = LocationServices.getSettingsClient(this)
+//        val task = settingsClient.checkLocationSettings(locationSettingsRequest)
+//
+//        task.addOnSuccessListener { locationSettingsResponse ->
+//            // 위치 설정이 이미 적절하게 설정되어 있음
+//            proceedAfterPermission()
+//        }
 
         locationRequest?.let { if (ActivityCompat.checkSelfPermission(
                 this,
@@ -88,7 +115,9 @@ class GpsUtil : Service() {
                 CHANNEL_ID,
                 "getoff_app_service_channel",
                 NotificationManager.IMPORTANCE_DEFAULT
-            )
+            ).apply {
+                enableVibration(false) // 진동 비활성화
+            }
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(serviceChannel)
         }
@@ -108,6 +137,7 @@ class GpsUtil : Service() {
             .setContentText("속도 모니터링이 활성화되었습니다.")
             .setSmallIcon(R.mipmap.ic_launcher_round) // 알림에 표시할 아이콘 설정
             .setContentIntent(pendingIntent)
+            .setVibrate(null)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         return notificationBuilder.build()
@@ -128,6 +158,7 @@ class GpsUtil : Service() {
             .setContentText("클릭하여 앱을 열 수 있습니다.")
             .setSmallIcon(R.mipmap.ic_launcher_round)
             .setContentIntent(pendingIntent)
+            .setVibrate(longArrayOf(0, 500))
             .build()
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
