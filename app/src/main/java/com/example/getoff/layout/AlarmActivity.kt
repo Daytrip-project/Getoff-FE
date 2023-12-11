@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Vibrator
 import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.getoff.R
 
@@ -21,7 +24,6 @@ class AlarmActivity : AppCompatActivity() {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         // 화면 깨우기 및 잠금 화면 위에 표시
         window.addFlags(
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
@@ -32,13 +34,22 @@ class AlarmActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_alarm)
 
+//        val blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink_animation)
+//        val imageView = findViewById<ImageView>(R.id.logo)
+//        imageView.startAnimation(blinkAnimation)
+
+        val frameLayout = findViewById<FrameLayout>(R.id.effect_area)
+        val blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink_animation)
+        frameLayout.startAnimation(blinkAnimation)
+
         val vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
         val pattern = longArrayOf(0, 500, 1000)
         vibrator.vibrate(pattern, 1)
 
         val buttonStopAlarm = findViewById<Button>(R.id.alarmStop)
         buttonStopAlarm.setOnClickListener {
-            finish()
+            vibrator.cancel()
+            finishAffinity()
         }
     }
 }

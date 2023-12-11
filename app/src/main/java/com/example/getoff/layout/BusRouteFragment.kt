@@ -36,13 +36,19 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     private var _binding: FragmentBusRouteBinding? = null
     private val binding get() = _binding!!
 
-    private var busStops: ArrayList<BusStop>? = null
+    private var busStops: ArrayList<BusStop>? = arrayListOf()
 
     private val locationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val longitude = intent.getDoubleExtra("longitude", 0.0)
             val latitude = intent.getDoubleExtra("latitude", 0.0)
             shareGPSViewModel.updateLocation(longitude, latitude)
+
+//            val arriveTrigger = intent.getBooleanExtra("arrive_trigger", false)
+//            if (arriveTrigger) {
+//                val intent = Intent(activity, AlarmActivity::class.java)
+//                startActivity(intent)
+//            }
         }
     }
 
@@ -80,6 +86,8 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
             // 텍스트뷰 업데이트
 //            busInfoTV?.text = "Longitude: ${location.first}, Latitude: ${location.second}"
         }
+
+        setRouteRView()
     }
 
 //    override fun onStart() {
@@ -89,6 +97,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 //    }
 
     private fun setRouteRView() {
+
         val rViewAdapter = BusStopRViewAdapter(busStops!!)
         binding.busRouteRecyclerView.adapter = rViewAdapter
         binding.busRouteRecyclerView.layoutManager = LinearLayoutManager(context)
@@ -96,6 +105,8 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         binding.busRouteRecyclerView.apply { addItemDecoration(ItemDividerDecoration()) }
 
 //        clickViewEvents()
+        busStops!!.add(BusStop("id1", "name1", "lN1"))
+        rViewAdapter.notifyItemInserted(busStops!!.size - 1)
 
         rViewAdapter!!.itemClick = object : BusStopRViewAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
@@ -118,7 +129,11 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
     override fun onStart() {
         super.onStart()
-        val filter = IntentFilter("com.example.UPDATE_LOCATION")
+//        val filter = IntentFilter("com.example.UPDATE_LOCATION")
+        val filter = IntentFilter().apply {
+            addAction("com.example.UPDATE_LOCATION")
+            addAction("com.example.TRIGGER_ARRIVE")
+        }
         context?.registerReceiver(locationReceiver, filter)
     }
 
@@ -129,6 +144,19 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
     override fun onYesButtonClick(id: Int) {
         // set alarm process
+        // id로 리스트의 index 검색 목적지 버스 정류장 가져오기
+        val intent = Intent("com.example.UPDATE_DESTINATION")
+        intent.putExtra("destination_longitude", 25.123456789)
+        intent.putExtra("destination_latitude", 10.123456789)
+        context?.sendBroadcast(intent)
+
+//        shareGPSViewModel.updateArriveTrigger()
+//        shareGPSViewModel.arriveTrigger.observe(viewLifecycleOwner) { arriveTrigger ->
+//            if (arriveTrigger) {
+//                val intent = Intent(activity, AlarmActivity::class.java)
+//                startActivity(intent)
+//            }
+//        }
     }
 
     companion object {

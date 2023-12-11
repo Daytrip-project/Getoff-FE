@@ -6,8 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
@@ -22,6 +24,11 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import java.lang.Math.atan2
+import java.lang.Math.cos
+import java.lang.Math.sin
+import java.lang.Math.sqrt
+import kotlin.math.pow
 
 class GpsUtil : Service() {
 
@@ -31,11 +38,28 @@ class GpsUtil : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
+    private var isSetDestination: Boolean = false
+    private var destination_longitude: Double = 0.0
+    private var destination_latitude: Double = 0.0
+
+    private lateinit var broadcastReceiver: BroadcastReceiver
+
+    var testTrigger = 0
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
+
+        broadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                destination_longitude = intent.getDoubleExtra("destination_longitude", 0.0)
+                destination_latitude = intent.getDoubleExtra("destination_latitude", 0.0)
+                isSetDestination = true
+            }
+        }
+        val filter = IntentFilter("com.example.UPDATE_DESTINATION")
+        registerReceiver(broadcastReceiver, filter)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -54,11 +78,39 @@ class GpsUtil : Service() {
                     intent.putExtra("longitude", location.longitude)
                     intent.putExtra("latitude", location.latitude)
                     sendBroadcast(intent)
+
+//                    if(isSetDestination && getDistanceFromTarget(location.latitude, location.longitude, destination_latitude, destination_longitude) * 1000 >= 100){
+                    testTrigger += 10
+                    if(isSetDestination && destination_latitude != 0.0 && destination_longitude != 0.0 && destination_latitude < testTrigger && destination_longitude < testTrigger){
+//                        val intent = Intent("com.example.TRIGGER_ARRIVE")
+//                        intent.putExtra("arrive_trigger", true)
+//                        sendBroadcast(intent)
+                        val intent = Intent(this@GpsUtil, AlarmActivity::class.java)
+                        startActivity(intent)
+
+                        // destination local reset + reset broadcast
+                        isSetDestination = false
+                    }
                 }
             }
         }
 
         startLocationUpdates()
+    }
+
+    private fun getDistanceFromTarget(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371.0 // 지구의 반지름 (단위: km)
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val rLat1 = Math.toRadians(lat1)
+        val rLat2 = Math.toRadians(lat2)
+
+        val a = sin(dLat / 2).pow(2) +
+                sin(dLon / 2).pow(2) * cos(rLat1) * cos(rLat2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return R * c // 거리 반환 (단위: km)
     }
 
     private fun startLocationUpdates() {
@@ -134,13 +186,12 @@ class GpsUtil : Service() {
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun arrivedAlarmNotification() {
-        val intent = Intent(this, AlarmActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-    }
-
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
+    override fun onDestroy() {
+        super.onDestroy()
+        this.unregisterReceiver(broadcastReceiver)
+    }
+
 }
