@@ -20,23 +20,14 @@ import com.example.getoff.decoration.ItemDividerDecoration
 import com.example.getoff.dto.BusStop
 import com.example.getoff.view.ShareGPSViewModel
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-//private const val ARG_PARAM1 = "param1"
-//private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [BusRouteFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     private val shareGPSViewModel: ShareGPSViewModel by viewModels()
 
     private var _binding: FragmentBusRouteBinding? = null
     private val binding get() = _binding!!
 
-    private var busStops: ArrayList<BusStop>? = null
+    private var busStops: ArrayList<BusStop>? = arrayListOf()
 
     private val locationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -74,21 +65,11 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         val busNumberTextView = view.findViewById<TextView>(R.id.busNumber)
         busNumberTextView.text = busNumber
 
-        // observe GPS data
-//        busInfoTV = view.findViewById<TextView>(R.id.busInfo)
-        shareGPSViewModel.locationData.observe(viewLifecycleOwner) { location ->
-            // 텍스트뷰 업데이트
-//            busInfoTV?.text = "Longitude: ${location.first}, Latitude: ${location.second}"
-        }
+        setRouteRView()
     }
 
-//    override fun onStart() {
-//        super.onStart()
-//        activity?.let { GpsUtil(it).requestLocation() } // 위치 권한 요청
-//        GpsUtil.getLocation()
-//    }
-
     private fun setRouteRView() {
+
         val rViewAdapter = BusStopRViewAdapter(busStops!!)
         binding.busRouteRecyclerView.adapter = rViewAdapter
         binding.busRouteRecyclerView.layoutManager = LinearLayoutManager(context)
@@ -96,6 +77,8 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         binding.busRouteRecyclerView.apply { addItemDecoration(ItemDividerDecoration()) }
 
 //        clickViewEvents()
+        busStops!!.add(BusStop("id1", "name1", "lN1"))
+        rViewAdapter.notifyItemInserted(busStops!!.size - 1)
 
         rViewAdapter!!.itemClick = object : BusStopRViewAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
@@ -118,7 +101,11 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
     override fun onStart() {
         super.onStart()
-        val filter = IntentFilter("com.example.UPDATE_LOCATION")
+//        val filter = IntentFilter("com.example.UPDATE_LOCATION")
+        val filter = IntentFilter().apply {
+            addAction("com.example.UPDATE_LOCATION")
+            addAction("com.example.TRIGGER_ARRIVE")
+        }
         context?.registerReceiver(locationReceiver, filter)
     }
 
@@ -129,17 +116,14 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
     override fun onYesButtonClick(id: Int) {
         // set alarm process
+        // id로 리스트의 index 검색 목적지 버스 정류장 가져오기
+        val intent = Intent("com.example.UPDATE_DESTINATION")
+        intent.putExtra("destination_longitude", 25.123456789)
+        intent.putExtra("destination_latitude", 10.123456789)
+        context?.sendBroadcast(intent)
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment BusRouteFragment.
-         */
         @JvmStatic
         fun newInstance(busNumber: String) =
             BusRouteFragment().apply {

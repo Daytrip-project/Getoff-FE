@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#BB912F2F"/> <!-- 이 부분에서 배경 색을 원하는 색으로 설정하세요 -->
+    <corners android:radius="30dp"/> <!-- 이 부분에서 모서리 둥글기를 조정할 수 있습니다 -->
+    <selector>
+        <item android:drawable="@color/pressedColor" android:state_pressed="true"/>
+        <item android:drawable="@android:color/transparent"/>
+    </selector>
+</shape>

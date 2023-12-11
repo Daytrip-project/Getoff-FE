@@ -9,6 +9,7 @@ import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
@@ -23,6 +24,11 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import java.lang.Math.atan2
+import java.lang.Math.cos
+import java.lang.Math.sin
+import java.lang.Math.sqrt
+import kotlin.math.pow
 
 class GpsUtil : Service() {
 
@@ -32,18 +38,14 @@ class GpsUtil : Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
-    class BootCompletedReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (Intent.ACTION_BOOT_COMPLETED == intent.action) {
-                val serviceIntent = Intent(context, GpsUtil::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent)
-                } else {
-                    context.startService(serviceIntent)
-                }
-            }
-        }
-    }
+
+    private var isSetDestination: Boolean = false
+    private var destination_longitude: Double = 0.0
+    private var destination_latitude: Double = 0.0
+
+    private lateinit var broadcastReceiver: BroadcastReceiver
+
+    var testTrigger = 0
 
     override fun onCreate() {
         super.onCreate()
@@ -70,6 +72,19 @@ class GpsUtil : Service() {
                     intent.putExtra("longitude", location.longitude)
                     intent.putExtra("latitude", location.latitude)
                     sendBroadcast(intent)
+
+//                    if(isSetDestination && getDistanceFromTarget(location.latitude, location.longitude, destination_latitude, destination_longitude) * 1000 >= 100){
+                    testTrigger += 10
+                    if(isSetDestination && destination_latitude != 0.0 && destination_longitude != 0.0 && destination_latitude < testTrigger && destination_longitude < testTrigger){
+//                        val intent = Intent("com.example.TRIGGER_ARRIVE")
+//                        intent.putExtra("arrive_trigger", true)
+//                        sendBroadcast(intent)
+                        val intent = Intent(this@GpsUtil, AlarmActivity::class.java)
+                        startActivity(intent)
+
+                        // destination local reset + reset broadcast
+                        isSetDestination = false
+                    }
                 }
             }
         }
@@ -78,6 +93,21 @@ class GpsUtil : Service() {
 
         // 서비스가 종료된 후 재시작을 위해 START_STICKY 반환
         return START_STICKY
+    }
+
+    private fun getDistanceFromTarget(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371.0 // 지구의 반지름 (단위: km)
+
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val rLat1 = Math.toRadians(lat1)
+        val rLat2 = Math.toRadians(lat2)
+
+        val a = sin(dLat / 2).pow(2) +
+                sin(dLon / 2).pow(2) * cos(rLat1) * cos(rLat2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return R * c // 거리 반환 (단위: km)
     }
 
     private fun startLocationUpdates() {
@@ -165,13 +195,12 @@ class GpsUtil : Service() {
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun arrivedAlarmNotification() {
-        val intent = Intent(this, AlarmActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-    }
-
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
+    override fun onDestroy() {
+        super.onDestroy()
+        this.unregisterReceiver(broadcastReceiver)
+    }
+
 }

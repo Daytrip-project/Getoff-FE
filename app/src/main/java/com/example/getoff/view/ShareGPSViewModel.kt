@@ -4,8 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.getoff.api.BusRouteApiService
-import com.example.getoff.config.RetrofitConfig
 import com.example.getoff.response.ThirdResponse
 import kotlinx.coroutines.launch
 
@@ -17,9 +15,6 @@ class ShareGPSViewModel : ViewModel() {
     fun updateLocation(longitude: Double, latitude: Double) {
         _locationData.value = Pair(longitude, latitude)
     }
-
-
-    val service = RetrofitConfig.retrofit.create(BusRouteApiService::class.java)
 
 
     private val _cityCoderesult = MutableLiveData<Int>()
@@ -50,5 +45,4 @@ class ShareGPSViewModel : ViewModel() {
             _busStopListresult.value = list
         }
     }
-
 }
