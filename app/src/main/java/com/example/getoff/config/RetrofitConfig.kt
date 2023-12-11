@@ -10,8 +10,7 @@ import java.util.concurrent.TimeUnit
 
 class RetrofitConfig : Application() {
     companion object{
-        const val SERVER_URL = "http://192.168.33.134:8080/"
-//        const val SERVER_URL = "/"
+        const val SERVER_URL = "https://apis.data.go.kr/1613000/BusRouteInfoInqireService/"
 
         lateinit var retrofit: Retrofit
     }
@@ -29,12 +28,12 @@ class RetrofitConfig : Application() {
         // 앱이 처음 생성되는 순간, retrofit 인스턴스를 생성
         retrofit = Retrofit.Builder()
             .baseUrl(SERVER_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
     }
     //GSon은 엄격한 json type을 요구하는데, 느슨하게 하기 위한 설정. success, fail이 json이 아니라 단순 문자열로 리턴될 경우 처리..
-    val gson : Gson = GsonBuilder()
-        .setLenient()
-        .create()
+//    val gson : Gson = GsonBuilder()
+//        .setLenient()
+//        .create()
 }
