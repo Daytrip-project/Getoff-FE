@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.getoff.R
 import com.example.getoff.adapter.BusStopRViewAdapter
+import com.example.getoff.databinding.BusstopItemBinding
 import com.example.getoff.databinding.FragmentBusRouteBinding
 import com.example.getoff.decoration.ItemDividerDecoration
 import com.example.getoff.response.ThirdResponse
@@ -31,6 +33,8 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
 //    private var busStops: ArrayList<BusStop>? = arrayListOf()
     private var busStopList = mutableListOf<ThirdResponse.Response.Body.Items.Item>()
+
+    private lateinit var rViewAdapter: BusStopRViewAdapter
 
     private val locationReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -76,7 +80,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
     private fun setRouteRView() {
 
-        val rViewAdapter = BusStopRViewAdapter(busStopList!!)
+        rViewAdapter = BusStopRViewAdapter(busStopList!!)
         binding.busRouteRecyclerView.adapter = rViewAdapter
         binding.busRouteRecyclerView.layoutManager = LinearLayoutManager(context)
 //        binding.busRouteRecyclerView.apply { addItemDecoration(DividerItemDecoration(context, LinearLayout.VERTICAL)) }
@@ -88,7 +92,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
         rViewAdapter!!.itemClick = object : BusStopRViewAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
-                view.setBackgroundColor(ContextCompat.getColor(view.context, R.color.lightRed))
+                rViewAdapter.setSelectedItem(position)
                 val dialog = ConfirmDialog(this@BusRouteFragment, "알람을 설정하시겠습니까?", position)
                 dialog.isCancelable = false
                 dialog.show(activity?.supportFragmentManager!!, "ConfirmDialog")
@@ -124,6 +128,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     override fun onYesButtonClick(id: Int) {
         // set alarm process
         // id로 리스트의 index 검색 목적지 버스 정류장 가져오기
+        rViewAdapter.notifyDataSetChanged()
         val intent = Intent("com.example.UPDATE_DESTINATION")
         intent.putExtra("destination_longitude", busStopList[id].gpslong)
         intent.putExtra("destination_latitude", busStopList[id].gpslati)

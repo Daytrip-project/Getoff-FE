@@ -1,5 +1,6 @@
 package com.example.getoff.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,11 @@ class BusStopRViewAdapter(private val busStops: List<ThirdResponse.Response.Body
     }
 
     var itemClick : ItemClick? = null
+    private var selectedItem = 1
+
+    fun setSelectedItem(idx: Int) {
+        selectedItem = idx
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BusStopRViewAdapter.Holder {
         val binding = BusstopItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -26,6 +32,7 @@ class BusStopRViewAdapter(private val busStops: List<ThirdResponse.Response.Body
         }
         holder.busStopName.text = busStops[position].nodenm
         holder.locationName.text = busStops[position].routeid
+        holder.bind(position)
     }
 
     override fun getItemCount(): Int {
@@ -35,5 +42,13 @@ class BusStopRViewAdapter(private val busStops: List<ThirdResponse.Response.Body
     inner class Holder(val binding: BusstopItemBinding) : RecyclerView.ViewHolder(binding.root) {
         val busStopName = binding.busStopName
         val locationName = binding.locationName
+
+        fun bind(position: Int) {
+            if (selectedItem == position) {
+                itemView.setBackgroundColor(Color.RED)
+            } else {
+                itemView.setBackgroundColor(Color.TRANSPARENT)
+            }
+        }
     }
 }
