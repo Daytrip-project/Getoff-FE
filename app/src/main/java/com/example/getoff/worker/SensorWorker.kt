@@ -29,6 +29,7 @@ class SensorWorker(appContext: Context, workerParams: WorkerParameters):
     companion object {
         fun scheduleSensorWorker(context: Context) {
             val workRequest = PeriodicWorkRequestBuilder<SensorWorker>(10, TimeUnit.SECONDS)
+                .addTag("PERIODIC_GPS_WORKER_TAG")
                 .build()
 
 //        WorkManager.getInstance(this).enqueue(workRequest)

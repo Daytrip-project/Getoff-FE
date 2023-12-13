@@ -15,7 +15,7 @@ class BusStopRViewAdapter(private val busStops: List<ThirdResponse.Response.Body
     }
 
     var itemClick : ItemClick? = null
-    private var selectedItem = 1
+    private var selectedItem = -1
 
     fun setSelectedItem(idx: Int) {
         selectedItem = idx

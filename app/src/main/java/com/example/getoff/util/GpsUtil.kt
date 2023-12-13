@@ -16,6 +16,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.work.WorkManager
 import com.example.getoff.R
 import com.example.getoff.layout.AlarmActivity
 import com.example.getoff.layout.MainActivity
@@ -28,13 +29,15 @@ import java.lang.Math.atan2
 import java.lang.Math.cos
 import java.lang.Math.sin
 import java.lang.Math.sqrt
+import java.util.Calendar
 import kotlin.math.pow
 
 class GpsUtil : Service() {
 
     private val CHANNEL_ID: String = "getoff_app_notification"
     private val SERVICE_NOTIFICATION_ID: Int = 410
-    private val ALARM_NOTIFICATION_ID: Int = 318
+    private val ARRIVE_ALARM_NOTIFICATION_ID: Int = 318
+    private val SUGGEST_ALARM_NOTIFICATION_ID: Int = 98
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -65,7 +68,7 @@ class GpsUtil : Service() {
                     Log.d("SpeedCheck", "Speed: $speedKmH km/h")
 
                     if (speedKmH > 20) {
-                        suggestAlarmNotification()
+                        notifySuggestAlarm()
                     }
 
                     val intent = Intent("com.example.UPDATE_LOCATION")
@@ -98,18 +101,32 @@ class GpsUtil : Service() {
         }
         notificationReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
-                resetDestination()
+                if (intent.action == "com.example.CANCEL_ARRIVE_ALARM") {
+                    resetDestination()
+                }
+                if (intent.action == "com.example.CANCEL_SUGGEST_ALARM") {
+                    notificationManager.cancel(SUGGEST_ALARM_NOTIFICATION_ID)
+                }
+                if (intent.action == "com.example.CANCEL_GPS_ALARM") {
+                    notificationManager.cancel(SERVICE_NOTIFICATION_ID)
+                    WorkManager.getInstance(context).cancelAllWorkByTag("PERIODIC_GPS_WORKER_TAG")
+                }
             }
         }
         registerReceiver(destinationReceiver, IntentFilter("com.example.UPDATE_DESTINATION"))
-        registerReceiver(notificationReceiver, IntentFilter("com.example.CANCEL_ALARM"))
+        val filter = IntentFilter().apply {
+            addAction("com.example.CANCEL_SUGGEST_ALARM")
+            addAction("com.example.CANCEL_ARRIVE_ALARM")
+            addAction("com.example.CANCEL_GPS_ALARM")
+        }
+        registerReceiver(notificationReceiver, filter)
     }
 
     private fun resetDestination() {
         destination_longitude = 0.0
         destination_latitude = 0.0
         isSetDestination = false
-        notificationManager.cancel(ALARM_NOTIFICATION_ID)
+        notificationManager.cancel(ARRIVE_ALARM_NOTIFICATION_ID)
     }
 
     private fun getDistanceFromTarget(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
@@ -173,11 +190,20 @@ class GpsUtil : Service() {
     }
 
     private fun createNotification(): Notification {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
+//        val notificationIntent = Intent(this, MainActivity::class.java)
+//        val pendingIntent = PendingIntent.getActivity(
+//            this,
+//            0,
+//            notificationIntent,
+//            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+//        )
+
+        val actionIntent = Intent("com.example.CANCEL_GPS_ALARM")
+
+        val actionPendingIntent = PendingIntent.getBroadcast(
             this,
             0,
-            notificationIntent,
+            actionIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -185,43 +211,84 @@ class GpsUtil : Service() {
             .setContentTitle("서비스 실행 중")
             .setContentText("속도 모니터링이 활성화되었습니다.")
             .setSmallIcon(R.mipmap.ic_launcher_round) // 알림에 표시할 아이콘 설정
-            .setContentIntent(pendingIntent)
+            .setContentIntent(actionPendingIntent)
             .setVibrate(null)
+            .addAction(R.drawable.cancel_alarm_button, "중지", actionPendingIntent)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         return notificationBuilder.build()
     }
 
+    private fun notifySuggestAlarm() {
+        val lastNotificationDate = getLastNotificationDate()
+        val today = Calendar.getInstance()
 
-    private fun suggestAlarmNotification() {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            notificationIntent,
-            Intent.FILL_IN_ACTION or PendingIntent.FLAG_IMMUTABLE
-        )
+        // 날짜가 변경되었는지 확인
+        if (lastNotificationDate.get(Calendar.YEAR) != today.get(Calendar.YEAR) ||
+            lastNotificationDate.get(Calendar.DAY_OF_YEAR) != today.get(Calendar.DAY_OF_YEAR)) {
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("하차 알람을 설정하시겠습니까?")
-            .setContentText("클릭하여 앱을 열 수 있습니다.")
-            .setSmallIcon(R.mipmap.ic_launcher_round)
-            .setContentIntent(pendingIntent)
-            .setVibrate(longArrayOf(0, 500))
-            .build()
+            // 알림 생성 및 표시
+            val notification = createSuggestAlarmNotification()
+            notificationManager.notify(SUGGEST_ALARM_NOTIFICATION_ID, notification)
 
-//        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(ALARM_NOTIFICATION_ID, notification)
+            // 오늘 날짜를 마지막 알림 날짜로 저장
+            saveLastNotificationDate(today)
+        }
     }
 
-    private fun manageAlarmNotification() {
-        val actionIntent = Intent("com.example.CANCEL_ALARM")
+    private fun createSuggestAlarmNotification(): Notification {
+//        val notificationIntent = Intent(this, MainActivity::class.java)
 //        val pendingIntent = PendingIntent.getActivity(
 //            this,
 //            0,
 //            notificationIntent,
 //            Intent.FILL_IN_ACTION or PendingIntent.FLAG_IMMUTABLE
 //        )
+
+        val actionIntent = Intent("com.example.CANCEL_SUGGEST_ALARM")
+
+        val actionPendingIntent = PendingIntent.getBroadcast(
+            this,
+            0,
+            actionIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("하차 알람을 설정하시겠습니까?")
+            .setContentText("클릭하여 앱을 열 수 있습니다.")
+            .setSmallIcon(R.mipmap.ic_launcher_round)
+            .setContentIntent(actionPendingIntent)
+            .setVibrate(longArrayOf(0, 500))
+            .addAction(R.drawable.cancel_alarm_button, "취소", actionPendingIntent)
+            .build()
+
+//        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+//        notificationManager.notify(SUGGEST_ALARM_NOTIFICATION_ID, notification)
+        return notification
+    }
+
+    private fun getLastNotificationDate(): Calendar {
+        val sharedPreferences = getSharedPreferences("GETOFF_APP_SUGGEST_LOG", Context.MODE_PRIVATE)
+        val time = sharedPreferences.getLong("LastNotificationTime", 0)
+        val calendar = Calendar.getInstance()
+        if (time != 0L) {
+            calendar.timeInMillis = time
+        }
+        return calendar
+    }
+
+    private fun saveLastNotificationDate(calendar: Calendar) {
+        val sharedPreferences = getSharedPreferences("GETOFF_APP_SUGGEST_LOG", Context.MODE_PRIVATE)
+        with (sharedPreferences.edit()) {
+            putLong("LastNotificationTime", calendar.timeInMillis)
+            apply()
+        }
+    }
+
+    private fun manageAlarmNotification() {
+        val actionIntent = Intent("com.example.CANCEL_ARRIVE_ALARM")
+
         val actionPendingIntent = PendingIntent.getBroadcast(
             this,
             0,
@@ -239,7 +306,7 @@ class GpsUtil : Service() {
             .build()
 
 //        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(ALARM_NOTIFICATION_ID, notification)
+        notificationManager.notify(ARRIVE_ALARM_NOTIFICATION_ID, notification)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
