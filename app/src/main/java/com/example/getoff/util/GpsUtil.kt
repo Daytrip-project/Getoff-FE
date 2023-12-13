@@ -108,8 +108,9 @@ class GpsUtil : Service() {
                     notificationManager.cancel(SUGGEST_ALARM_NOTIFICATION_ID)
                 }
                 if (intent.action == "com.example.CANCEL_GPS_ALARM") {
-                    notificationManager.cancel(SERVICE_NOTIFICATION_ID)
+                    stopForeground(true)
                     WorkManager.getInstance(context).cancelAllWorkByTag("PERIODIC_GPS_WORKER_TAG")
+                    stopSelf()
                 }
             }
         }
