@@ -20,7 +20,7 @@ import androidx.core.app.NotificationCompat
 import androidx.work.WorkManager
 import com.daytrip.getoff.dto.BusStop
 import com.daytrip.getoff.layout.AlarmActivity
-import com.example.getoff.R
+import com.daytrip.getoff.R
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest

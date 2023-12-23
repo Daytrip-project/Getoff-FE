@@ -6,7 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.daytrip.getoff.dto.BusStop
-import com.example.getoff.databinding.BusstopItemBinding
+import com.daytrip.getoff.databinding.BusstopItemBinding
 
 class BusStopRViewAdapter(private val busStops: MutableList<BusStop>) : RecyclerView.Adapter<BusStopRViewAdapter.Holder>() {
     interface ItemClick {

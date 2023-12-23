@@ -15,7 +15,7 @@ import androidx.fragment.app.FragmentTransaction
 import androidx.fragment.app.activityViewModels
 import com.daytrip.getoff.dto.BusStop
 import com.daytrip.getoff.view.LocationViewModel
-import com.example.getoff.R
+import com.daytrip.getoff.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch

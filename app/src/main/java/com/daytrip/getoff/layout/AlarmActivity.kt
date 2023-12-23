@@ -8,7 +8,7 @@ import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.example.getoff.R
+import com.daytrip.getoff.R
 
 class AlarmActivity : AppCompatActivity() {
 

@@ -15,8 +15,8 @@ import com.daytrip.getoff.adapter.BusStopRViewAdapter
 import com.daytrip.getoff.decoration.ItemDividerDecoration
 import com.daytrip.getoff.dto.BusStop
 import com.daytrip.getoff.view.LocationViewModel
-import com.example.getoff.R
-import com.example.getoff.databinding.FragmentBusRouteBinding
+import com.daytrip.getoff.R
+import com.daytrip.getoff.databinding.FragmentBusRouteBinding
 
 
 class BusRouteFragment : Fragment(), ConfirmDialogInterface {

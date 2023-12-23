@@ -18,7 +18,7 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.daytrip.getoff.worker.SensorWorker.Companion.scheduleSensorWorker
-import com.example.getoff.R
+import com.daytrip.getoff.R
 
 
 class MainActivity : AppCompatActivity() {

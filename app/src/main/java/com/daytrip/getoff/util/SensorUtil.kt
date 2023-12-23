@@ -16,7 +16,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.daytrip.getoff.layout.MainActivity
-import com.example.getoff.R
+import com.daytrip.getoff.R
 
 class SensorUtil : Service(),  SensorEventListener {
     private lateinit var sensorManager: SensorManager
