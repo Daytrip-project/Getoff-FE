@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.getoff.BuildConfig
 import com.example.getoff.api.BusRouteApiService
 import com.example.getoff.api.BusRouteSeoulApiService
 import com.example.getoff.config.RetrofitConfig
@@ -24,7 +25,7 @@ import java.net.URLDecoder
 import java.util.Locale
 
 private const val TAG = "BusSearchFragment_재성"
-private const val OPENAPI_SERVICE_KEY = "lzI3VS9v8qRQTXWNz9ZMtTe%2F%2FEzhqCBkJFZ9VNPUjNBFh75WiHZ8doT%2F%2Flaa056cD3ec6Pjo46Vni%2Frw0loVYw%3D%3D"
+private const val OPENAPI_SERVICE_KEY = BuildConfig.OPENAPI_KEY;
 
 class LocationViewModel : ViewModel() {
 

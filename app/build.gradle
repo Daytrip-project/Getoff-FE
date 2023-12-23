@@ -17,6 +17,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "OPENAPI_KEY", "\"${System.getenv("GETOFF_OPENAPI_SERVICE_KEY")}\""
     }
 
     buildTypes {
@@ -39,6 +40,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 
