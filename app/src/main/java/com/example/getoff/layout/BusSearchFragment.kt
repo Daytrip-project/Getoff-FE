@@ -71,7 +71,9 @@ class BusSearchFragment : Fragment() {
                 CoroutineScope(Main).launch {
                     val userStations = context?.let { it -> locationViewModel.getUserStation(it, allBusStopList).await() }
                     newFragment = BusRouteFragment.newInstance(busNumber,
-                        combineRoutes(userStations!![0], userStations[1], allBusStopList[0], allBusStopList[1]) as ArrayList<BusStop>
+                        (if (userStations?.size == 1) allBusStopList[0]
+                        else combineRoutes(userStations!![0], userStations[1], allBusStopList[0], allBusStopList[1]) as ArrayList<BusStop>)
+                                as ArrayList<BusStop>
                     )
 
                     createTransaction(newFragment)

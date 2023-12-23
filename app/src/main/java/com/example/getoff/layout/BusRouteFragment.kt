@@ -1,29 +1,21 @@
 package com.example.getoff.layout
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Parcelable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.getoff.R
 import com.example.getoff.adapter.BusStopRViewAdapter
-import com.example.getoff.databinding.BusstopItemBinding
 import com.example.getoff.databinding.FragmentBusRouteBinding
 import com.example.getoff.decoration.ItemDividerDecoration
 import com.example.getoff.dto.BusStop
-import com.example.getoff.response.ThirdResponse
 import com.example.getoff.view.LocationViewModel
 
 
@@ -34,7 +26,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     private val binding get() = _binding!!
 
 //    private var busStops: ArrayList<BusStop>? = arrayListOf()
-    private var busStopList = mutableListOf<ThirdResponse.Response.Body.Items.Item>()
+    private var busStopList = mutableListOf<BusStop>()
 
     private lateinit var rViewAdapter: BusStopRViewAdapter
 
@@ -61,7 +53,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val busNumber = arguments?.getInt("busNumber")
+        val busNumber = arguments?.getString("busNumber")
         busStopList = arguments?.getParcelableArrayList("busStopList")!!
 
         val busNumberTextView = view.findViewById<TextView>(R.id.busNumber)
@@ -125,8 +117,8 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         rViewAdapter.notifyDataSetChanged()
         val intent = Intent("com.example.UPDATE_DESTINATION")
         intent.putParcelableArrayListExtra("bus_stop_list", busStopList as java.util.ArrayList<out Parcelable>)
-        intent.putExtra("destination_longitude", busStopList[id].gpslong)
-        intent.putExtra("destination_latitude", busStopList[id].gpslati)
+        intent.putExtra("destination_longitude", busStopList[id].lon)
+        intent.putExtra("destination_latitude", busStopList[id].lat)
         context?.sendBroadcast(intent)
     }
 

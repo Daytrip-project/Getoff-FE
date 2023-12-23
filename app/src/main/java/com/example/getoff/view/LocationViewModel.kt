@@ -11,7 +11,6 @@ import com.example.getoff.api.BusRouteApiService
 import com.example.getoff.api.BusRouteSeoulApiService
 import com.example.getoff.config.RetrofitConfig
 import com.example.getoff.dto.BusStop
-import com.example.getoff.dto.Station
 import com.example.getoff.dto.busRouteSeouls
 import com.example.getoff.response.BusRouteSeoulLocResponse
 import com.example.getoff.response.BusRouteSeoulResponse
@@ -23,7 +22,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import java.net.URLDecoder
 import java.util.Locale
-import kotlin.math.min
 
 private const val TAG = "BusSearchFragment_재성"
 private const val OPENAPI_SERVICE_KEY = "lzI3VS9v8qRQTXWNz9ZMtTe%2F%2FEzhqCBkJFZ9VNPUjNBFh75WiHZ8doT%2F%2Flaa056cD3ec6Pjo46Vni%2Frw0loVYw%3D%3D"
@@ -121,15 +119,15 @@ class LocationViewModel : ViewModel() {
         val busStopListResponse = retrofitSeoulBri.getBusStopList(URLDecoder.decode(OPENAPI_SERVICE_KEY),
             routeId, "json")
 
-        Log.d(TAG, "onViewCreated: busStopListResponse| " + busStopListResponse.toString())
+        Log.d(TAG, "onViewCreated: busStopListResponse| " + busStopListResponse.raw().body().toString())
 
-//        var busStopLIst = busStopListResponse.body()?.msgBody?.itemList
-//        for(busStop in busStopLIst!!){
-//            Log.d(TAG, "onViewCreated: busStopLIst| " + busStop.toString())
-//            busStopListResult.add(busStop)
-//        }
-//        _seoulBusStopList.value = busStopListResult
-//        Log.d(TAG, "onViewCreated: " + _seoulBusStopList)
+        var busStopLIst = busStopListResponse.body()?.msgBody?.itemList
+        for(busStop in busStopLIst!!){
+            Log.d(TAG, "onViewCreated: busStopLIst| " + busStop.toString())
+            busStopListResult.add(busStop)
+        }
+        _seoulBusStopList.value = busStopListResult
+        Log.d(TAG, "onViewCreated: " + _seoulBusStopList)
 
         return _seoulBusStopList.value
     }
@@ -164,12 +162,12 @@ class LocationViewModel : ViewModel() {
             val cityCode = requestCityCode(targetCityName)
             if (cityCode == CITY_CODE_SEOUL) {
                 val route = busRouteSeouls.find { it.name == busNumber }
-                val busStopSeoulLocList = requestSeoulBusStopLocList(route?.routeId.toString())
+//                val busStopSeoulLocList = requestSeoulBusStopLocList(route?.routeId.toString())
                 val busStopSeoulList = requestSeoulBusStopList(route?.routeId.toString())
 
                 for (i in busStopSeoulList!!.indices) {
-                    val busStop = BusStop(busStopSeoulList[i].busRouteId, busStopSeoulList[i].stStationNm, targetCityName,
-                        busStopSeoulLocList!![i].gpsX.toDouble(), busStopSeoulLocList!![i].gpsY.toDouble())
+                    val busStop = BusStop(busStopSeoulList[i].busRouteId, busStopSeoulList[i].stationNm, targetCityName,
+                        busStopSeoulList!![i].gpsX.toDouble(), busStopSeoulList!![i].gpsY.toDouble())
                     busStopBindedList.add(busStop)
                 }
                 allBusStopList.add(busStopBindedList)
