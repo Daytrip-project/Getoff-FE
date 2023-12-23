@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/darkRed"
-    tools:context=".SplashActivity">
+    tools:context="com.daytrip.getoff.SplashActivity">
 
     <ImageView
         android:layout_width="100dp"

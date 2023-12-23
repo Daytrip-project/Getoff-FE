@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.getoff'
+    namespace 'com.daytrip.getoff'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.getoff"
+        applicationId "com.daytrip.getoff"
         minSdk 24
         targetSdk 33
         versionCode 1
