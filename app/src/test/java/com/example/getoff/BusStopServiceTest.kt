@@ -31,17 +31,17 @@ class BusStopServiceTest {
         val mockResponse = MockResponse()
         mockResponse.setBody("""
             {
-                "busRoute": [{"id": "123", "name": "Station 1", "locationName": "location 1"}, {"id": "234", "name": "Station 2", "locationName": "location 2"}]
+                "BusRouteSeoul": [{"id": "123", "name": "Station 1", "locationName": "location 1"}, {"id": "234", "name": "Station 2", "locationName": "location 2"}]
             }
         """.trimIndent())
         mockWebServer.enqueue(mockResponse)
 
         // Perform request
-        val responseBody  = service.getBusRoute("10")
+        val responseBody  = service.getBusRouteSeoul("10")
 
         // Assert response
         assert(responseBody != null)
-        assert(responseBody.busRoute?.size == 2)
+        assert(responseBody.BusRouteSeoul?.size == 2)
     }
 
     @Test

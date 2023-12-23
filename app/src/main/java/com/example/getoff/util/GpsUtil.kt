@@ -14,12 +14,16 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.fragment.app.activityViewModels
 import androidx.work.WorkManager
 import com.example.getoff.R
+import com.example.getoff.dto.BusStop
 import com.example.getoff.layout.AlarmActivity
 import com.example.getoff.layout.MainActivity
+import com.example.getoff.view.LocationViewModel
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -45,6 +49,7 @@ class GpsUtil : Service() {
     private lateinit var notificationManager: NotificationManager
 
     private var isSetDestination: Boolean = false
+    private var bus_stop_list = arrayListOf<BusStop>()
     private var destination_longitude: Double = 0.0
     private var destination_latitude: Double = 0.0
 
@@ -72,13 +77,16 @@ class GpsUtil : Service() {
                     }
 
                     val intent = Intent("com.example.UPDATE_LOCATION")
-                    intent.putExtra("longitude", location.longitude)
                     intent.putExtra("latitude", location.latitude)
+                    intent.putExtra("longitude", location.longitude)
                     sendBroadcast(intent)
 
-//                    if(isSetDestination && getDistanceFromTarget(location.latitude, location.longitude, destination_latitude, destination_longitude) * 1000 >= 100){
-                    testTrigger += 5
-                    if(isSetDestination && destination_latitude != 0.0 && destination_longitude != 0.0 && destination_latitude < testTrigger && destination_longitude < testTrigger){
+//                    val currentStation = updateUserStation(location.latitude, location.longitude)
+
+                    if(isSetDestination &&
+                        CalcUtil.calcDistanceByCoordinate(location.latitude, location.longitude, destination_latitude, destination_longitude) * 1000 >= 100){
+//                    testTrigger += 5
+//                    if(isSetDestination && destination_latitude != 0.0 && destination_longitude != 0.0 && destination_latitude < testTrigger && destination_longitude < testTrigger){
                         val intent = Intent(this@GpsUtil, AlarmActivity::class.java)
                         startActivity(intent)
 
@@ -92,7 +100,10 @@ class GpsUtil : Service() {
         startLocationUpdates()
 
         destinationReceiver = object : BroadcastReceiver() {
+            @RequiresApi(Build.VERSION_CODES.TIRAMISU)
             override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+                bus_stop_list = intent.getParcelableExtra("bus_stop_list", ArrayList::class.java) as ArrayList<BusStop>
+//                bus_stop_list: ArrayList<BusStop>? = intent.getParcelableExtra("bus_stop_list", ArrayList<BusStop>?)
                 destination_longitude = intent.getDoubleExtra("destination_longitude", 0.0)
                 destination_latitude = intent.getDoubleExtra("destination_latitude", 0.0)
                 isSetDestination = true
@@ -130,19 +141,17 @@ class GpsUtil : Service() {
         notificationManager.cancel(ARRIVE_ALARM_NOTIFICATION_ID)
     }
 
-    private fun getDistanceFromTarget(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371.0 // 지구의 반지름 (단위: km)
-
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val rLat1 = Math.toRadians(lat1)
-        val rLat2 = Math.toRadians(lat2)
-
-        val a = sin(dLat / 2).pow(2) +
-                sin(dLon / 2).pow(2) * cos(rLat1) * cos(rLat2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-        return R * c // 거리 반환 (단위: km)
+    private fun updateUserStation(currentLat: Double, currentLon: Double) : BusStop? {
+        var minDistance: Double = 100.0
+        var userStation: BusStop? = null
+        for (station in bus_stop_list) {
+            val distance = CalcUtil.calcDistanceByCoordinate(currentLat, currentLon, station.lat, station.lon)
+            if (minDistance > distance) {
+                minDistance = distance
+                userStation = station
+            }
+        }
+        return userStation
     }
 
     private fun startLocationUpdates() {

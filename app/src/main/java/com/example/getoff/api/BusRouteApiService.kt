@@ -21,7 +21,7 @@ interface BusRouteApiService {
                    @Query("pageNo") pageNo: Int,
                    @Query("_type") _type: String,
                    @Query("cityCode") cityCode: Int,
-                   @Query("routeNo") routeNo: Int
+                   @Query("routeNo") routeNo: String
     ): Response<SecondResponse>
 
     @GET("getRouteAcctoThrghSttnList")

@@ -23,9 +23,9 @@ class RetrofitUtil {
 //
 //        suspend fun requestRoute(busNumber: String): ArrayList<Station>? {
 //            try {
-//                val response = busStopService.getBusRoute(busNumber)
+//                val response = busStopService.getBusRouteSeoul(busNumber)
 //                if (response != null) {
-//                    return response.busRoute as ArrayList<Station>?
+//                    return response.BusRouteSeoul as ArrayList<Station>?
 //                } else {
 //                    // 응답 실패 처리
 //                    return null

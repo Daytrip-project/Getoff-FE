@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +22,7 @@ import com.example.getoff.adapter.BusStopRViewAdapter
 import com.example.getoff.databinding.BusstopItemBinding
 import com.example.getoff.databinding.FragmentBusRouteBinding
 import com.example.getoff.decoration.ItemDividerDecoration
+import com.example.getoff.dto.BusStop
 import com.example.getoff.response.ThirdResponse
 import com.example.getoff.view.LocationViewModel
 
@@ -35,14 +37,6 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
     private var busStopList = mutableListOf<ThirdResponse.Response.Body.Items.Item>()
 
     private lateinit var rViewAdapter: BusStopRViewAdapter
-
-    private val locationReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val longitude = intent.getDoubleExtra("longitude", 0.0)
-            val latitude = intent.getDoubleExtra("latitude", 0.0)
-            locationViewModel.updateLocation(longitude, latitude)
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +77,7 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
         rViewAdapter = BusStopRViewAdapter(busStopList!!)
         binding.busRouteRecyclerView.adapter = rViewAdapter
         binding.busRouteRecyclerView.layoutManager = LinearLayoutManager(context)
-//        binding.busRouteRecyclerView.apply { addItemDecoration(DividerItemDecoration(context, LinearLayout.VERTICAL)) }
+//        binding.BusRouteRecyclerView.apply { addItemDecoration(DividerItemDecoration(context, LinearLayout.VERTICAL)) }
         binding.busRouteRecyclerView.apply { addItemDecoration(ItemDividerDecoration()) }
 
 //        clickViewEvents()
@@ -110,26 +104,27 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 //        }
 //    }
 
-    override fun onStart() {
-        super.onStart()
-//        val filter = IntentFilter("com.example.UPDATE_LOCATION")
-        val filter = IntentFilter().apply {
-            addAction("com.example.UPDATE_LOCATION")
-            addAction("com.example.TRIGGER_ARRIVE")
-        }
-        context?.registerReceiver(locationReceiver, filter)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        context?.unregisterReceiver(locationReceiver)
-    }
+//    override fun onStart() {
+//        super.onStart()
+////        val filter = IntentFilter("com.example.UPDATE_LOCATION")
+//        val filter = IntentFilter().apply {
+//            addAction("com.example.UPDATE_LOCATION")
+//            addAction("com.example.TRIGGER_ARRIVE")
+//        }
+//        context?.registerReceiver(locationReceiver, filter)
+//    }
+//
+//    override fun onStop() {
+//        super.onStop()
+//        context?.unregisterReceiver(locationReceiver)
+//    }
 
     override fun onYesButtonClick(id: Int) {
         // set alarm process
         // id로 리스트의 index 검색 목적지 버스 정류장 가져오기
         rViewAdapter.notifyDataSetChanged()
         val intent = Intent("com.example.UPDATE_DESTINATION")
+        intent.putParcelableArrayListExtra("bus_stop_list", busStopList as java.util.ArrayList<out Parcelable>)
         intent.putExtra("destination_longitude", busStopList[id].gpslong)
         intent.putExtra("destination_latitude", busStopList[id].gpslati)
         context?.sendBroadcast(intent)
@@ -137,10 +132,10 @@ class BusRouteFragment : Fragment(), ConfirmDialogInterface {
 
     companion object {
         @JvmStatic
-        fun newInstance(busNumber: Int, busStopList: ArrayList<ThirdResponse.Response.Body.Items.Item>) =
+        fun newInstance(busNumber: String, busStopList: ArrayList<BusStop>) =
             BusRouteFragment().apply {
                 arguments = Bundle().apply {
-                    putInt("busNumber", busNumber)
+                    putString("busNumber", busNumber)
                     putParcelableArrayList("busStopList", busStopList)
                 }
             }

@@ -10,9 +10,11 @@ import java.util.concurrent.TimeUnit
 
 class RetrofitConfig : Application() {
     companion object{
-        const val SERVER_URL = "https://apis.data.go.kr/1613000/BusRouteInfoInqireService/"
+        const val KDATA_API_BRIIS_URL = "https://apis.data.go.kr/1613000/BusRouteInfoInqireService/"
+        const val SEOULDATA_API_BRI_URL = "http://ws.bus.go.kr/api/rest/busRouteInfo/"
 
-        lateinit var retrofit: Retrofit
+        lateinit var retrofitKdataBriis: Retrofit
+        lateinit var retrofitSeoulBri: Retrofit
     }
 
     override fun onCreate() {
@@ -21,13 +23,18 @@ class RetrofitConfig : Application() {
         // 레트로핏 인스턴스를 생성하고, 레트로핏에 각종 설정값들을 지정해줍니다.
         // 연결 타임아웃시간은 5초로 지정이 되어있고, HttpLoggingInterceptor를 붙여서 어떤 요청이 나가고 들어오는지를 보여줍니다.
         val okHttpClient = OkHttpClient.Builder()
-            .readTimeout(5000, TimeUnit.MILLISECONDS)
-            .connectTimeout(5000, TimeUnit.MILLISECONDS)
-            .connectTimeout(30, TimeUnit.SECONDS).build()
+            .readTimeout(10000, TimeUnit.MILLISECONDS)
+            .connectTimeout(10000, TimeUnit.MILLISECONDS).build()
 
         // 앱이 처음 생성되는 순간, retrofit 인스턴스를 생성
-        retrofit = Retrofit.Builder()
-            .baseUrl(SERVER_URL)
+        retrofitKdataBriis = Retrofit.Builder()
+            .baseUrl(KDATA_API_BRIIS_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(okHttpClient)
+            .build()
+
+        retrofitSeoulBri = Retrofit.Builder()
+            .baseUrl(SEOULDATA_API_BRI_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()
